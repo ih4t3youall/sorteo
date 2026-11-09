@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sorteo La Bestia</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f6f3ef; --panel: #fff; --panel-2: #fbf9f6; --texto: #1f1a16; --suave: #6f665e; --borde: #e7e1d9; --borde-fuerte: #cfc6bb;
+  --acento: #c2410c; --acento-hover: #a8380a; --acento-suave: #fff1e6; --acento-texto: #fff;
+  --peligro: #b42318; --peligro-suave: #fdecea; --ok: #1f7a3a; --ok-suave: #e8f5ec; --aviso: #8a5a00; --aviso-suave: #fff6db;
+  --sombra: 0 1px 2px rgba(60,40,20,.05), 0 2px 6px rgba(60,40,20,.06);
+  --radio: 14px; --radio-chico: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14120f; --panel: #1e1b17; --panel-2: #242019; --texto: #ece6df; --suave: #a59b90; --borde: #322d27; --borde-fuerte: #4a433b;
+    --acento: #fb8c4f; --acento-hover: #ffa16b; --acento-suave: #3a2416; --acento-texto: #1b1205;
+    --peligro: #f97066; --peligro-suave: #3b1d1a; --ok: #4ade80; --ok-suave: #16301f; --aviso: #fbbf24; --aviso-suave: #33270c;
+    --sombra: none;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--texto); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.oculto { display: none !important; }
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+a { color: var(--acento); }
+
+.barra { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--borde); padding: 10px 16px 0; }
+.barra .fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1100px; margin: 0 auto; padding-bottom: 10px; }
+.marca { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #f97316, #c2410c); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.dev { background: var(--aviso-suave); color: var(--aviso); border: 1px solid currentColor; border-radius: 6px; font-size: 11px; font-weight: 700; padding: 1px 6px; letter-spacing: .04em; }
+.quien { display: flex; align-items: center; gap: 12px; }
+.quien .txt { text-align: right; line-height: 1.2; }
+.quien .txt b { display: block; font-size: 15px; }
+.quien .txt small { color: var(--suave); font-size: 12px; }
+.tabs { display: flex; gap: 2px; max-width: 1100px; margin: 0 auto; overflow-x: auto; }
+.tabs a { padding: 8px 12px 10px; border-bottom: 2px solid transparent; color: var(--suave); text-decoration: none; white-space: nowrap; font-weight: 500; }
+.tabs a:hover { color: var(--texto); }
+.tabs a.activa { color: var(--acento); border-color: var(--acento); font-weight: 600; }
+main { max-width: 1100px; margin: 0 auto; padding: 22px 16px 60px; }
+h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.02em; }
+h2 { font-size: 16px; margin: 24px 0 10px; }
+.sub { color: var(--suave); margin: 0 0 16px; }
+.panel { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 18px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--borde-fuerte); background: var(--panel);
+  border-radius: var(--radio-chico); padding: 8px 14px; min-height: 38px; cursor: pointer; font-weight: 600; color: var(--texto); text-decoration: none; white-space: nowrap; }
+.btn:hover { background: var(--panel-2); }
+.btn.prim { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+.btn.prim:hover { background: var(--acento-hover); }
+.btn.peligro { color: var(--peligro); }
+.btn.chico { min-height: 30px; padding: 4px 10px; font-size: 13px; }
+.btn:disabled { opacity: .55; cursor: default; }
+.campo { display: block; margin-bottom: 12px; }
+.campo > span { display: block; font-size: 13px; font-weight: 600; color: var(--suave); margin-bottom: 4px; }
+.campo input, .campo select, .campo textarea, input.in { width: 100%; padding: 9px 12px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-chico); background: var(--panel); min-height: 40px; }
+.campo input[readonly] { background: var(--panel-2); color: var(--suave); }
+.campo.error input { border-color: var(--peligro); background: var(--peligro-suave); }
+.grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 14px; }
+.msg { padding: 10px 14px; border-radius: var(--radio-chico); margin: 0 0 14px; font-weight: 500; }
+.msg.error { background: var(--peligro-suave); color: var(--peligro); }
+.msg.ok { background: var(--ok-suave); color: var(--ok); }
+.msg.info { background: var(--aviso-suave); color: var(--aviso); }
+
+/* login */
+.login { max-width: 380px; margin: 8vh auto; padding: 0 16px; }
+.login .logo { width: 52px; height: 52px; font-size: 18px; margin-bottom: 12px; }
+.pin { letter-spacing: .5em; font-size: 22px !important; text-align: center; }
+
+/* carga del cajero */
+.carga { max-width: 620px; margin: 3vh auto 0; }
+.grande { font-size: 30px !important; padding: 14px 18px !important; min-height: 64px !important; font-weight: 600; letter-spacing: .03em; }
+.paso { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--acento); font-weight: 700; margin-bottom: 4px; }
+.ayuda { color: var(--suave); font-size: 13px; margin-top: 8px; }
+kbd { border: 1px solid var(--borde-fuerte); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; font-size: 12px; background: var(--panel-2); }
+.ficha { display: grid; grid-template-columns: auto 1fr; gap: 4px 18px; margin: 6px 0 18px; }
+.ficha dt { color: var(--suave); font-size: 13px; padding-top: 2px; }
+.ficha dd { margin: 0; font-weight: 600; }
+.cab-cliente { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.cab-cliente h1 { font-size: 26px; }
+.acciones { display: flex; gap: 8px; align-items: center; position: relative; }
+.menu-btn { width: 40px; padding: 0; font-size: 20px; }
+.menu { position: absolute; right: 0; top: 44px; background: var(--panel); border: 1px solid var(--borde-fuerte); border-radius: var(--radio-chico); box-shadow: 0 8px 24px rgba(0,0,0,.15); min-width: 230px; z-index: 10; padding: 4px; }
+.menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
+.menu button:hover { background: var(--panel-2); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ok); color: #fff; padding: 12px 20px; border-radius: 12px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 60; max-width: 90vw; }
+.toast.error { background: var(--peligro); }
+
+/* admin */
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.cifra { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); padding: 14px 16px; }
+.cifra b { display: block; font-size: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cifra span { color: var(--suave); font-size: 13px; }
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.filtros input, .filtros select { padding: 7px 10px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-chico); background: var(--panel); min-height: 38px; }
+.tabla { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); overflow: hidden; font-size: 14px; }
+.tabla th, .tabla td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--borde); vertical-align: top; }
+.tabla th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); background: var(--panel-2); }
+.tabla tr.clic { cursor: pointer; }
+.tabla tr.clic:hover td { background: var(--panel-2); }
+.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+.envoltura { overflow-x: auto; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.chip.pendiente { background: var(--aviso-suave); color: var(--aviso); }
+.chip.confirmado { background: var(--ok-suave); color: var(--ok); }
+.chip.ambiguo { background: var(--peligro-suave); color: var(--peligro); }
+dialog { border: 1px solid var(--borde-fuerte); border-radius: var(--radio); background: var(--panel); color: var(--texto); padding: 20px; width: min(760px, 94vw); max-height: 88vh; }
+dialog::backdrop { background: rgba(20,15,10,.45); }
+.dlg-cab { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 10px; }
+.dlg-cab h2 { margin: 0; }
+.fila-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 14px; }
+.ganador { font-size: 20px; font-weight: 700; }
+@media print { .barra, .no-imprimir { display: none !important; } dialog { position: static; border: 0; width: auto; max-height: none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<dialog id="dlg"></dialog>
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const app = $("#app"), dlg = $("#dlg");
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pesos = n => n == null ? "" : "$ " + Number(n).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const fecha = s => s ? s.slice(0, 10).split("-").reverse().join("/") : "";
+const fechaHora = s => s ? `${fecha(s)} ${s.slice(11, 16)}` : "";
+const local = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } };
+let yo = null, modo = "", vencer = null;
+
+async function api(metodo, ruta, cuerpo) {
+  const r = await fetch(ruta, { method: metodo, credentials: "same-origin",
+    headers: cuerpo ? { "Content-Type": "application/json" } : {}, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+  const datos = await r.json().catch(() => ({}));
+  if (r.status === 401 && yo && ruta !== "/api/login") { yo = null; pantallaLogin("La sesión terminó. Volvé a entrar."); }
+  if (!r.ok) { const e = new Error(datos.error || `Error ${r.status}`); e.status = r.status; e.campo = datos.campo; throw e; }
+  return datos;
+}
+
+function toast(texto, error = false) {
+  const t = document.createElement("div");
+  t.className = "toast" + (error ? " error" : "");
+  t.textContent = texto;
+  document.body.append(t);
+  setTimeout(() => t.remove(), error ? 5000 : 3200);
+}
+
+// ------------------------------------------------------------------ login ---
+
+async function pantallaLogin(mensaje) {
+  clearTimeout(vencer);
+  if (dlg.open) dlg.close();
+  app.innerHTML = `
+  <main class="login"><div class="panel">
+    <div class="logo">LB</div>
+    <h1>Sorteo <span id="modo"></span></h1>
+    <p class="sub">Entrá con tu usuario y PIN del Sistema de Registros</p>
+    ${mensaje ? `<p class="msg info">${esc(mensaje)}</p>` : ""}
+    <p class="msg error oculto" id="err"></p>
+    <form id="f">
+      <label class="campo"><span>Usuario</span><input id="u" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label class="campo"><span>PIN</span><input id="p" type="password" class="pin" inputmode="numeric" maxlength="4" autocomplete="current-password" required></label>
+      <button class="btn prim" style="width:100%">Entrar</button>
+    </form>
+    <p class="ayuda" id="reg"></p>
+  </div></main>`;
+  const u = $("#u"), p = $("#p"), err = $("#err");
+  u.value = local("sorteo_usuario") || "";
+  (u.value ? p : u).focus();
+  api("GET", "/api/estado").then(e => {
+    modo = e.modo;
+    if (e.modo === "dev") $("#modo").innerHTML = `<span class="dev">DEV</span>`;
+    if (!e.registros_ok) {
+      err.textContent = e.usuario_local_activo ? "Sin conexión con el Sistema de Registros: por ahora solo puede entrar el usuario temporal." : `No hay conexión con el Sistema de Registros (${e.registros_url}).`;
+      err.className = e.usuario_local_activo ? "msg info" : "msg error";
+    }
+  }).catch(() => {});
+  p.addEventListener("input", () => { p.value = p.value.replace(/\D/g, ""); if (p.value.length === 4 && u.value.trim()) $("#f").requestSubmit(); });
+  $("#f").onsubmit = async e => {
+    e.preventDefault();
+    const b = $("#f button"); b.disabled = true; err.className = "msg error oculto";
+    try {
+      const r = await api("POST", "/api/login", { usuario: u.value.trim(), pin: p.value });
+      local("sorteo_usuario", u.value.trim().toLowerCase());
+      entrar(r.usuario);
+    } catch (x) {
+      err.textContent = x.message; err.classList.remove("oculto"); p.value = ""; p.focus();
+    } finally { b.disabled = false; }
+  };
+}
+
+function entrar(u) {
+  yo = u;
+  clearTimeout(vencer);
+  // todos se desloguean a las 23:59
+  vencer = setTimeout(() => { yo = null; pantallaLogin("Son las 23:59: la sesión se cerró. Volvé a entrar."); }, Math.max(1, u.sesion_segundos) * 1000);
+  if (!location.hash || !yo.es_admin) location.hash = "#carga";
+  ruteo();
+}
+
+async function salir() {
+  await api("POST", "/api/logout").catch(() => {});
+  yo = null;
+  pantallaLogin();
+}
+
+// ----------------------------------------------------------------- marco ---
+
+const TABS = [["carga", "Carga"], ["panel", "Panel"], ["tickets", "Tickets"], ["clientes", "Clientes"], ["archivos", "Archivos"],
+              ["campanas", "Campañas"], ["sorteos", "Sorteos"], ["exportar", "Exportar"]];
+
+function marco(actual) {
+  const tabs = yo.es_admin ? `<nav class="tabs">${TABS.map(([k, t]) => `<a href="#${k}" class="${k === actual ? "activa" : ""}">${t}</a>`).join("")}</nav>` : "";
+  app.innerHTML = `
+  <header class="barra"><div class="fila">
+    <div class="marca"><div class="logo">LB</div><div>Sorteo ${modo === "dev" ? `<span class="dev">DEV</span>` : ""}</div></div>
+    <div class="quien">
+      <div class="txt"><b>${esc(yo.nombre)}</b><small>${esc(yo.es_admin ? "Administrador" : "Cajero")}${yo.sector ? " · " + esc(yo.sector) : ""} · sesión hasta las 23:59</small></div>
+      <button class="btn chico" id="salir" tabindex="-1">Salir</button>
+    </div>
+  </div>${tabs}</header>
+  <main id="m"></main>`;
+  $("#salir").onclick = salir;
+  return $("#m");
+}
+
+function ruteo() {
+  if (!yo) return pantallaLogin();
+  const [pag, arg] = location.hash.slice(1).split("/");
+  const paginas = { carga: pantallaCarga, panel: pantallaPanel, tickets: pantallaTickets, clientes: pantallaClientes, archivos: pantallaArchivos,
+                    campanas: pantallaCampanas, sorteos: pantallaSorteos, exportar: pantallaExportar };
+  const f = (yo.es_admin && paginas[pag]) || pantallaCarga;
+  f(marco(paginas[pag] && (yo.es_admin || pag === "carga") ? pag : "carga"), arg);
+}
+window.addEventListener("hashchange", ruteo);
+
+// ------------------------------------------------------- carga (cajero) ---
+// DNI ⏎ → existe: datos + Nº de ticket ⏎ → vuelve al DNI · no existe: alta con ticket.
+
+let ultimoAviso = null;
+
+function pantallaCarga(m) {
+  m.innerHTML = `<div class="carga"><div class="panel" id="c"></div></div>`;
+  pasoDni();
+}
+
+function pasoDni(dniPrevio = "") {
+  const c = $("#c");
+  c.innerHTML = `
+    <div class="paso">Paso 1</div>
+    <h1>DNI del cliente</h1>
+    <p class="msg error oculto" id="err"></p>
+    <form id="f"><input class="in grande" id="dni" inputmode="numeric" autocomplete="off" placeholder="Número de documento" value="${esc(dniPrevio)}"></form>
+    <p class="ayuda">Escribí el DNI y apretá <kbd>Enter</kbd>.</p>`;
+  const i = $("#dni");
+  i.focus(); i.select();
+  i.addEventListener("input", () => i.value = i.value.replace(/\D/g, "").slice(0, 10));
+  $("#f").onsubmit = async e => {
+    e.preventDefault();
+    const dni = i.value.trim();
+    if (dni.length < 6) return error("El DNI tiene que tener al menos 6 números");
+    i.disabled = true;
+    try {
+      pasoTicket(await api("GET", `/api/clientes/dni/${dni}`));
+    } catch (x) {
+      if (x.status === 404) pasoAlta(dni);
+      else { i.disabled = false; error(x.message); i.focus(); }
+    }
+  };
+  function error(t) { const e = $("#err"); e.textContent = t; e.classList.remove("oculto"); }
+}
+
+function fichaCliente(cl) {
+  return `<dl class="ficha">
+    <dt>DNI</dt><dd>${esc(cl.dni)}</dd>
+    <dt>Nacimiento</dt><dd>${fecha(cl.nacimiento)} (${cl.edad} años)</dd>
+    <dt>Teléfono</dt><dd>${esc(cl.telefono)}</dd>
+    <dt>Email</dt><dd>${esc(cl.email) || "<span style='color:var(--suave)'>—</span>"}</dd>
+  </dl>`;
+}
+
+function pasoTicket(cl) {
+  const c = $("#c");
+  c.innerHTML = `
+    <div class="cab-cliente">
+      <div><div class="paso">Cliente registrado</div><h1>${esc(cl.nombre)} ${esc(cl.apellido)}</h1></div>
+      <div class="acciones">
+        <button type="button" class="btn chico" id="editar" tabindex="-1">Editar</button>
+        <button type="button" class="btn menu-btn" id="menuBtn" tabindex="-1" aria-label="Más opciones">☰</button>
+        <div class="menu oculto" id="menu">
+          <button type="button" id="editarTodo">Editar todos los datos</button>
+          <button type="button" id="otro">Volver al DNI</button>
+        </div>
+      </div>
+    </div>
+    ${fichaCliente(cl)}
+    <p class="msg error oculto" id="err"></p>
+    <form id="f"><label class="campo"><span>Número de ticket</span>
+      <input class="in grande" id="tk" inputmode="numeric" autocomplete="off" placeholder="ej. 00056066"></label></form>
+    <p class="ayuda"><kbd>Enter</kbd> guarda el ticket y vuelve al DNI · <kbd>Esc</kbd> vuelve sin guardar</p>`;
+  const tk = $("#tk");
+  tk.focus();
+  tk.addEventListener("input", () => tk.value = tk.value.replace(/\D/g, "").slice(0, 20));
+  tk.addEventListener("keydown", e => { if (e.key === "Escape") pasoDni(); });
+  $("#editar").onclick = () => pasoEditar(cl, ["telefono", "email"]);
+  $("#menuBtn").onclick = () => $("#menu").classList.toggle("oculto");
+  $("#editarTodo").onclick = () => pasoEditar(cl, ["nombre", "apellido", "nacimiento", "telefono", "email"]);
+  $("#otro").onclick = () => pasoDni();
+  $("#f").onsubmit = async e => {
+    e.preventDefault();
+    if (!tk.value) return mostrarError("Escribí el número de ticket");
+    tk.disabled = true;
+    try {
+      await api("POST", "/api/tickets", { cliente_id: cl.id, numero: tk.value });
+      toast(`✓ Ticket ${tk.value} cargado · ${cl.nombre} ${cl.apellido}`);
+      pasoDni();
+    } catch (x) { tk.disabled = false; mostrarError(x.message); tk.focus(); tk.select(); }
+  };
+}
+
+function mostrarError(t) { const e = $("#err"); if (e) { e.textContent = t; e.classList.remove("oculto"); } else toast(t, true); }
+
+const CAMPOS = {
+  nombre: ["Nombre", "text", "given-name"], apellido: ["Apellido", "text", "family-name"],
+  nacimiento: ["Fecha de nacimiento (DD/MM/AAAA)", "text", "off"], telefono: ["Teléfono", "tel", "off"],
+  email: ["Email (opcional)", "email", "off"], ticket: ["Número de ticket", "text", "off"],
+};
+
+function camposHtml(lista, valores = {}) {
+  return lista.map(k => `<label class="campo" data-c="${k}"><span>${CAMPOS[k][0]}</span>
+    <input id="c_${k}" type="${CAMPOS[k][1]}" autocomplete="${CAMPOS[k][2]}" value="${esc(valores[k] ?? "")}"
+      ${k === "nacimiento" || k === "ticket" || k === "telefono" ? 'inputmode="numeric"' : ""}></label>`).join("");
+}
+
+// Enter pasa al siguiente campo; en el último guarda. Esc cancela.
+function navegacionTeclado(lista, guardar, cancelar) {
+  lista.forEach((k, n) => {
+    const i = $(`#c_${k}`);
+    if (k === "nacimiento") {
+      i.maxLength = 10;
+      i.placeholder = "dd/mm/aaaa";
+      i.addEventListener("input", e => {
+        if (i.selectionStart < i.value.length) {  // corrigiendo en el medio: no le muevo el cursor
+          i.value = i.value.replace(/[^\d/]/g, "");
+        } else {
+          const d = i.value.replace(/\D/g, "").slice(0, 8);
+          // la barra se pone sola al completar día y mes; al borrar no se agrega, para poder borrarla
+          const cierra = n => d.length > n || (d.length === n && !e.inputType?.startsWith("delete"));
+          i.value = cierra(4) ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : cierra(2) ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+        }
+        const problema = problemaFecha(i.value);
+        if (problema) marcarError({ message: problema, campo: "nacimiento", sinFoco: true }); else limpiarError();
+      });
+    }
+    if (k === "ticket") i.addEventListener("input", () => i.value = i.value.replace(/\D/g, "").slice(0, 20));
+    if (k === "email") i.addEventListener("input", () => { if (i.closest(".campo").classList.contains("error") && !problemaEmail(i.value)) limpiarError(); });
+    i.addEventListener("keydown", e => {
+      if (e.key === "Escape") { e.preventDefault(); cancelar(); }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (k === "nacimiento" || k === "email") {
+          const problema = k === "email" ? problemaEmail(i.value) : problemaFecha(i.value, true);
+          if (problema) return marcarError({ message: problema, campo: k });
+          limpiarError();
+        }
+        if (n < lista.length - 1) $(`#c_${lista[n + 1]}`).focus();
+        else guardar();
+      }
+    });
+  });
+  $(`#c_${lista[0]}`).focus();
+}
+
+function leerCampos(lista) {
+  const d = {};
+  for (const k of lista) d[k] = $(`#c_${k}`).value.trim();
+  if ("nacimiento" in d) {
+    const problema = problemaFecha(d.nacimiento, true);
+    if (problema) throw { message: problema, campo: "nacimiento" };
+    d.nacimiento = d.nacimiento.split("/").reverse().join("-");
+  }
+  if ("email" in d && problemaEmail(d.email)) throw { message: problemaEmail(d.email), campo: "email" };
+  return d;
+}
+
+// El email es opcional: vacío está bien, pero si se escribe tiene que ser válido (misma regla que el servidor).
+function problemaEmail(texto) {
+  const t = texto.trim();
+  return !t || /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/.test(t) ? "" : "El email no es válido (ej. nombre@gmail.com). Si no tiene, dejalo vacío";
+}
+
+// Devuelve qué tiene de mal la fecha (dd/mm/aaaa), o "" si va bien. Sin `completa` admite que todavía la estén escribiendo.
+function problemaFecha(texto, completa = false) {
+  const d = texto.replace(/\D/g, "");
+  const MES = "El mes va de 01 a 12 y se escribe con el cero adelante (ej. 08)";
+  if ((d.length >= 1 && d[0] > "3") || (d.length >= 2 && (+d.slice(0, 2) < 1 || +d.slice(0, 2) > 31))) return "El día va de 01 a 31 y se escribe con dos números (ej. 05)";
+  if ((d.length >= 3 && d[2] > "1") || (d.length >= 4 && (+d.slice(2, 4) < 1 || +d.slice(2, 4) > 12))) return MES;
+  if (d.length < 8) return completa ? "Escribí la fecha completa con el formato dd/mm/aaaa" : "";
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) return "La fecha tiene que tener el formato dd/mm/aaaa";
+  const [dia, mes, anio] = [+d.slice(0, 2), +d.slice(2, 4), +d.slice(4)];
+  const f = new Date(anio, mes - 1, dia);
+  if (f.getMonth() !== mes - 1 || f.getDate() !== dia) return `El ${texto} no existe en el calendario`;
+  if (anio < 1900 || f > new Date()) return "El año de nacimiento no es válido";
+  return "";
+}
+
+function limpiarError() {
+  $$(".campo.error").forEach(e => e.classList.remove("error"));
+  $("#err")?.classList.add("oculto");
+}
+
+function marcarError(x) {
+  $$(".campo.error").forEach(e => e.classList.remove("error"));
+  mostrarError(x.message);
+  const k = x.campo, el = k && $(`[data-c="${k}"]`);
+  if (!el) return;
+  el.classList.add("error");
+  if (!x.sinFoco) { $("input", el).focus(); $("input", el).select?.(); }
+}
+
+function pasoAlta(dni) {
+  const lista = ["nombre", "apellido", "nacimiento", "telefono", "email", "ticket"];
+  $("#c").innerHTML = `
+    <div class="paso">Cliente nuevo</div>
+    <h1>Alta de cliente</h1>
+    <p class="sub">El DNI ${esc(dni)} no está registrado. Completá los datos.</p>
+    <p class="msg error oculto" id="err"></p>
+    <label class="campo"><span>DNI</span><input value="${esc(dni)}" readonly tabindex="-1"></label>
+    <div class="grilla">${camposHtml(lista)}</div>
+    <div class="fila-btns"><button class="btn" id="cancelar" tabindex="-1">Cancelar (Esc)</button><button class="btn prim" id="guardar" tabindex="-1">Guardar (Enter)</button></div>`;
+  let enviando = false;
+  const guardar = async () => {
+    if (enviando) return;
+    let d;
+    try { d = leerCampos(lista); } catch (x) { return marcarError(x); }
+    if (!d.ticket) return marcarError({ message: "Falta el número de ticket", campo: "ticket" });
+    enviando = true;
+    try {
+      const r = await api("POST", "/api/clientes", { dni, ...d });
+      toast(`✓ ${r.cliente.nombre} ${r.cliente.apellido} registrado · ticket ${d.ticket}`);
+      pasoDni();
+    } catch (x) { marcarError(x); } finally { enviando = false; }
+  };
+  navegacionTeclado(lista, guardar, () => pasoDni(dni));
+  $("#guardar").onclick = guardar;
+  $("#cancelar").onclick = () => pasoDni(dni);
+}
+
+function pasoEditar(cl, lista, alTerminar) {
+  const volver = alTerminar || (nuevo => pasoTicket(nuevo || cl));
+  const valores = { ...cl, nacimiento: fecha(cl.nacimiento) };
+  const cont = alTerminar ? dlg : $("#c");
+  cont.innerHTML = `
+    <div class="paso">Editar cliente</div>
+    <h1>${esc(cl.nombre)} ${esc(cl.apellido)}</h1>
+    <p class="sub">DNI ${esc(cl.dni)} (no se puede cambiar)</p>
+    <p class="msg error oculto" id="err"></p>
+    <div class="grilla">${camposHtml(lista, valores)}</div>
+    <div class="fila-btns"><button class="btn" id="cancelar" tabindex="-1">Cancelar (Esc)</button><button class="btn prim" id="guardar" tabindex="-1">Guardar (Enter)</button></div>`;
+  const guardar = async () => {
+    try {
+      const nuevo = await api("PUT", `/api/clientes/${cl.id}`, leerCampos(lista));
+      toast("✓ Datos actualizados");
+      volver(nuevo);
+    } catch (x) { marcarError(x); }
+  };
+  if (alTerminar && !dlg.open) dlg.showModal();
+  navegacionTeclado(lista, guardar, () => volver());
+  $("#guardar", cont).onclick = guardar;
+  $("#cancelar", cont).onclick = () => volver();
+}
+
+// ------------------------------------------------------------------ admin ---
+
+function modal(html) {
+  dlg.innerHTML = html;
+  if (!dlg.open) dlg.showModal();
+  $$("[data-cerrar]", dlg).forEach(b => b.onclick = () => dlg.close());
+}
+const cabModal = t => `<div class="dlg-cab"><h2>${t}</h2><button class="btn chico no-imprimir" data-cerrar>Cerrar</button></div>`;
+const chip = e => `<span class="chip ${e}">${e}</span>`;
+
+async function pantallaPanel(m) {
+  m.innerHTML = `<h1>Panel</h1><p class="sub">Resumen de la carga y del último cruce</p><div id="r">Cargando…</div>`;
+  const r = await api("GET", "/api/resumen");
+  const u = r.ultimo_cruce;
+  $("#r").innerHTML = `
+    <div class="cifras">
+      <div class="cifra"><b>${r.clientes}</b><span>clientes (${r.clientes_hoy} hoy)</span></div>
+      <div class="cifra"><b>${r.tickets}</b><span>tickets (${r.tickets_hoy} hoy)</span></div>
+      <div class="cifra"><b>${r.pendientes}</b><span>pendientes de cruce</span></div>
+      <div class="cifra"><b>${r.ambiguos}</b><span>ambiguos (revisar)</span></div>
+      <div class="cifra"><b>${r.confirmados}</b><span>confirmados</span></div>
+      <div class="cifra"><b>${pesos(r.monto)}</b><span>en compras confirmadas</span></div>
+    </div>
+    <h2>Tickets cargados hoy por cajero</h2>
+    ${r.por_cajero_hoy.length ? `<table class="tabla"><tr><th>Cajero</th><th class="num">Tickets</th></tr>${r.por_cajero_hoy.map(x => `<tr><td>${esc(x.cajero)}</td><td class="num">${x.tickets}</td></tr>`).join("")}</table>` : `<p class="sub">Todavía no se cargó ninguno hoy.</p>`}
+    <h2>Último cruce</h2>
+    <p class="sub">${u ? `${fechaHora(u.fecha)} (${esc(u.motivo)}${u.usuario ? ", " + esc(u.usuario) : ""}): ${u.confirmados} confirmados, ${u.ambiguos} ambiguos, ${u.pendientes} siguen pendientes.` : "Todavía no se hizo ninguno."}
+    El cruce automático corre todos los días a las 23:59. <a href="#archivos">Subir archivo / procesar ahora</a></p>
+    <div id="ulocal"></div>`;
+  panelUsuarioLocal();
+}
+
+async function panelUsuarioLocal() {
+  const u = await api("GET", "/api/usuario-local");
+  if (!u.configurado || !$("#ulocal")) return;
+  const estado = !u.en_archivo ? "Desactivado en config.json" : u.activo ? "Activo: entra sin el Sistema de Registros y solo puede cargar y editar" : "Desactivado";
+  $("#ulocal").innerHTML = `<h2>Usuario temporal</h2>
+    <div class="panel filtros" style="justify-content:space-between;margin:0">
+      <div><b>${esc(u.nombre)}</b> (${esc(u.usuario)}) · ${estado}${u.ultimo_cambio ? `<br><small style="color:var(--suave)">${esc(u.ultimo_cambio)}</small>` : ""}</div>
+      ${u.en_archivo ? `<button class="btn ${u.activo ? "peligro" : ""}" id="ulocalBtn">${u.activo ? "Desactivar" : "Reactivar"}</button>` : ""}
+    </div>`;
+  if (u.en_archivo) $("#ulocalBtn").onclick = async () => {
+    if (u.activo && !confirm(`¿Desactivar a ${u.nombre}? Se le cierra la sesión y ya no va a poder entrar.`)) return;
+    await api("PUT", "/api/usuario-local", { activo: !u.activo });
+    panelUsuarioLocal();
+  };
+}
+
+async function pantallaTickets(m) {
+  m.innerHTML = `<h1>Tickets</h1><p class="sub">Los tickets cargados por los cajeros y su estado de cruce con las ventas</p>
+    <div class="filtros"><input id="q" placeholder="Buscar Nº, DNI, cliente o cajero">
+      <select id="est"><option value="">Todos</option><option value="pendiente">Pendientes</option><option value="ambiguo">Ambiguos</option><option value="confirmado">Confirmados</option></select>
+      <input type="date" id="desde" title="Cargados desde"><input type="date" id="hasta" title="Cargados hasta"><span id="tot" class="sub" style="margin:0"></span></div>
+    <div class="envoltura" id="t"></div>`;
+  let pausa;
+  const cargar = async () => {
+    const p = new URLSearchParams({ q: $("#q").value, estado: $("#est").value, desde: $("#desde").value, hasta: $("#hasta").value, limite: 300 });
+    const r = await api("GET", "/api/tickets?" + p);
+    $("#tot").textContent = `${r.total} ticket(s)`;
+    $("#t").innerHTML = `<table class="tabla"><tr><th>Nº</th><th>Cliente</th><th>Cargado</th><th>Cajero</th><th>Estado</th><th>Emisión</th><th class="num">Total</th></tr>
+      ${r.items.map(t => `<tr class="clic" data-id="${t.id}"><td>${esc(t.numero)}${t.ticket_archivo ? `<br><small style="color:var(--suave)">${esc(t.ticket_archivo)}</small>` : ""}</td>
+        <td>${esc(t.cliente)}<br><small style="color:var(--suave)">DNI ${esc(t.dni)}</small></td><td>${fechaHora(t.cargado)}</td><td>${esc(t.cajero_nombre)}</td>
+        <td>${chip(t.estado)}</td><td>${fechaHora(t.emision)}</td><td class="num">${pesos(t.total)}</td></tr>`).join("")}</table>`;
+    $$("tr[data-id]").forEach(tr => tr.onclick = () => verTicket(tr.dataset.id, cargar));
+  };
+  ["est", "desde", "hasta"].forEach(id => $("#" + id).onchange = cargar);
+  $("#q").oninput = () => { clearTimeout(pausa); pausa = setTimeout(cargar, 300); };
+  cargar();
+}
+
+async function verTicket(id, alCambiar) {
+  const t = await api("GET", `/api/tickets/${id}`);
+  modal(`${cabModal(`Ticket ${esc(t.numero)} ${chip(t.estado)}`)}
+    <dl class="ficha"><dt>Cliente</dt><dd>${esc(t.cliente)} · DNI ${esc(t.dni)}</dd><dt>Cargado</dt><dd>${fechaHora(t.cargado)} por ${esc(t.cajero_nombre)}</dd>
+      ${t.ticket_archivo ? `<dt>En el archivo</dt><dd>${esc(t.ticket_archivo)} · ${fechaHora(t.emision)} · ${esc(t.razon_social)}</dd><dt>Total</dt><dd>${pesos(t.total)} (${t.unidades} unidades, ${t.renglones} renglones)</dd>` : ""}
+      ${t.detalle_estado ? `<dt>Detalle</dt><dd>${esc(t.detalle_estado)}</dd>` : ""}</dl>
+    ${t.candidatos ? `<h2>¿Cuál de estos es?</h2><table class="tabla"><tr><th>Ticket</th><th>Emisión</th><th>Razón social</th><th class="num">Total</th><th></th></tr>
+      ${t.candidatos.map(c => `<tr><td>${esc(c.ticket)}</td><td>${fechaHora(c.emision)}</td><td>${esc(c.razon_social)}</td><td class="num">${pesos(c.total)}</td>
+        <td><button class="btn chico prim" data-res="${esc(c.ticket)}">Es este</button></td></tr>`).join("")}</table>` : ""}
+    ${t.items ? `<h2>Artículos</h2><div class="envoltura"><table class="tabla"><tr><th>#</th><th>Producto</th><th class="num">Cant.</th><th class="num">Bonif.</th><th class="num">P. unit. final</th><th class="num">Subtotal</th></tr>
+      ${t.items.map(i => `<tr><td>${i.renglon}</td><td>${esc(i.producto)}${i.descripcion ? " · " + esc(i.descripcion) : ""}</td><td class="num">${i.cantidad}</td><td class="num">${i.bonif ?? ""}</td>
+        <td class="num">${pesos(i.precio_unitario_final)}</td><td class="num">${pesos(i.subtotal)}</td></tr>`).join("")}</table></div>` : ""}
+    <div class="fila-btns"><button class="btn peligro" id="borrar">Borrar ticket</button></div>`);
+  $$("[data-res]", dlg).forEach(b => b.onclick = async () => { await api("POST", `/api/tickets/${id}/resolver`, { ticket_archivo: b.dataset.res }); toast("✓ Ticket confirmado"); verTicket(id, alCambiar); alCambiar?.(); });
+  $("#borrar", dlg).onclick = async () => {
+    if (!confirm(`¿Borrar el ticket ${t.numero}${t.venta_id ? " y su compra" : ""}? No se puede deshacer.`)) return;
+    await api("DELETE", `/api/tickets/${id}`); dlg.close(); toast("Ticket borrado"); alCambiar?.();
+  };
+}
+
+async function pantallaClientes(m) {
+  m.innerHTML = `<h1>Clientes</h1><p class="sub">Personas registradas para el sorteo</p>
+    <div class="filtros"><input id="q" placeholder="Buscar nombre, DNI, teléfono o email" style="min-width:280px"><span id="tot" class="sub" style="margin:0"></span></div>
+    <div class="envoltura" id="t"></div>`;
+  let pausa;
+  const cargar = async () => {
+    const r = await api("GET", "/api/clientes?" + new URLSearchParams({ q: $("#q").value, limite: 300 }));
+    $("#tot").textContent = `${r.total} cliente(s)`;
+    $("#t").innerHTML = `<table class="tabla"><tr><th>Cliente</th><th>DNI</th><th>Edad</th><th>Teléfono</th><th>Email</th><th>Alta</th><th class="num">Tickets</th><th class="num">Compras</th></tr>
+      ${r.items.map(c => `<tr class="clic" data-id="${c.id}"><td>${esc(c.nombre)} ${esc(c.apellido)}</td><td>${esc(c.dni)}</td><td>${c.edad}</td><td>${esc(c.telefono)}</td>
+        <td>${esc(c.email)}</td><td>${fechaHora(c.creado)}<br><small style="color:var(--suave)">${esc(c.creado_por)}</small></td><td class="num">${c.tickets}</td><td class="num">${pesos(c.monto)}</td></tr>`).join("")}</table>`;
+    $$("tr[data-id]").forEach(tr => tr.onclick = () => verCliente(tr.dataset.id, cargar));
+  };
+  $("#q").oninput = () => { clearTimeout(pausa); pausa = setTimeout(cargar, 300); };
+  cargar();
+}
+
+async function verCliente(id, alCambiar) {
+  const c = await api("GET", `/api/clientes/${id}`);
+  modal(`${cabModal(`${esc(c.nombre)} ${esc(c.apellido)}`)}${fichaCliente(c)}
+    <p class="sub">Alta: ${fechaHora(c.creado)} por ${esc(c.creado_por)}${c.modificado ? ` · Última modificación: ${fechaHora(c.modificado)} por ${esc(c.modificado_por)}` : ""}</p>
+    <h2>Tickets (${c.lista_tickets.length})</h2>
+    <table class="tabla"><tr><th>Nº</th><th>Cargado</th><th>Cajero</th><th>Estado</th><th class="num">Total</th></tr>
+      ${c.lista_tickets.map(t => `<tr><td>${esc(t.numero)}</td><td>${fechaHora(t.cargado)}</td><td>${esc(t.cajero_nombre)}</td><td>${chip(t.estado)}</td><td class="num">${pesos(t.total)}</td></tr>`).join("")}</table>
+    ${c.cambios.length ? `<h2>Cambios</h2><table class="tabla"><tr><th>Fecha</th><th>Quién</th><th>Antes</th><th>Después</th></tr>
+      ${c.cambios.map(x => `<tr><td>${fechaHora(x.fecha)}</td><td>${esc(x.usuario)}</td><td>${esc(x.antes)}</td><td>${esc(x.despues)}</td></tr>`).join("")}</table>` : ""}
+    <div class="fila-btns"><button class="btn" id="editar">Editar datos</button></div>`);
+  $("#editar", dlg).onclick = () => pasoEditar(c, ["nombre", "apellido", "nacimiento", "telefono", "email"], () => { verCliente(id, alCambiar); alCambiar?.(); });
+}
+
+async function pantallaArchivos(m) {
+  m.innerHTML = `<h1>Archivos de ventas</h1>
+    <p class="sub">Subí el archivo del día (.xlsx o .csv) con las columnas Ticket, Emisión, Razón social, Producto, Cant., Cant. items, Bonif. y Precio unitario final.
+      Todos los días a las 23:59 se cruzan los tickets pendientes con los archivos; también podés hacerlo ahora.</p>
+    <div class="panel">
+      <div class="filtros" style="margin:0"><input type="file" id="arch" accept=".xlsx,.csv,.txt"><button class="btn prim" id="subir">Subir</button>
+        <button class="btn" id="procesar">Procesar ahora</button></div>
+      <div id="res" style="margin-top:12px"></div>
+    </div>
+    <h2>Subidos</h2><div class="envoltura" id="lista"></div>
+    <h2>Cruces</h2><div class="envoltura" id="corr"></div>`;
+  const cargar = async () => {
+    const r = await api("GET", "/api/archivos");
+    $("#lista").innerHTML = r.archivos.length ? `<table class="tabla"><tr><th>Archivo</th><th>Subido</th><th class="num">Renglones</th><th class="num">Tickets</th><th>Emisión</th><th>Esperando cruce</th><th></th></tr>
+      ${r.archivos.map(a => `<tr><td>${esc(a.nombre)}</td><td>${fechaHora(a.subido)}<br><small style="color:var(--suave)">${esc(a.subido_por)}</small></td><td class="num">${a.filas}</td><td class="num">${a.tickets}</td>
+        <td>${fechaHora(a.desde)}${a.hasta && a.hasta !== a.desde ? " → " + fechaHora(a.hasta) : ""}</td><td>${a.en_espera ? `${a.en_espera} renglones (se borran a los ${r.dias_retener} días)` : "ya no"}</td>
+        <td><button class="btn chico peligro" data-borrar="${a.id}">Borrar</button></td></tr>`).join("")}</table>` : `<p class="sub">Todavía no se subió ningún archivo.</p>`;
+    $("#corr").innerHTML = r.corridas.length ? `<table class="tabla"><tr><th>Fecha</th><th>Tipo</th><th class="num">Confirmados</th><th class="num">Ambiguos</th><th class="num">Siguen pendientes</th></tr>
+      ${r.corridas.map(c => `<tr><td>${fechaHora(c.fecha)}</td><td>${esc(c.motivo)}${c.usuario ? " · " + esc(c.usuario) : ""}</td><td class="num">${c.confirmados}</td><td class="num">${c.ambiguos}</td><td class="num">${c.pendientes}</td></tr>`).join("")}</table>` : `<p class="sub">Sin cruces todavía.</p>`;
+    $$("[data-borrar]").forEach(b => b.onclick = async () => { if (confirm("¿Borrar el archivo? Las compras que ya se cruzaron quedan guardadas.")) { await api("DELETE", `/api/archivos/${b.dataset.borrar}`); cargar(); } });
+  };
+  $("#subir").onclick = async () => {
+    const f = $("#arch").files[0];
+    if (!f) return toast("Elegí un archivo", true);
+    $("#subir").disabled = true;
+    try {
+      const datos = await new Promise((ok, mal) => { const lr = new FileReader(); lr.onload = () => ok(lr.result); lr.onerror = mal; lr.readAsDataURL(f); });
+      const r = await api("POST", "/api/archivos", { nombre: f.name, datos });
+      $("#res").innerHTML = `<p class="msg ok">✓ ${r.filas} renglones, ${r.tickets} tickets${r.desde ? ` (emisión ${fechaHora(r.desde)} a ${fechaHora(r.hasta)})` : ""}.
+        ${r.coinciden} coinciden con tickets cargados que esperan cruce. Columnas: ${Object.entries(r.columnas).map(([k, v]) => `${esc(v)}`).join(", ")}.</p>`;
+      $("#arch").value = "";
+      cargar();
+    } catch (x) { $("#res").innerHTML = `<p class="msg error">${esc(x.message)}</p>`; }
+    finally { $("#subir").disabled = false; }
+  };
+  $("#procesar").onclick = async () => {
+    const r = await api("POST", "/api/procesar");
+    $("#res").innerHTML = `<p class="msg ok">Cruce hecho: ${r.confirmados} confirmados, ${r.ambiguos} ambiguos, ${r.pendientes} siguen pendientes.</p>`;
+    cargar();
+  };
+  cargar();
+}
+
+async function pantallaCampanas(m) {
+  m.innerHTML = `<div class="filtros" style="justify-content:space-between"><div><h1>Campañas</h1><p class="sub" style="margin:0">Reglas para calcular chances y hacer el sorteo</p></div>
+    <button class="btn prim" id="nueva">Nueva campaña</button></div><div class="envoltura" id="t"></div>`;
+  const cargar = async () => {
+    const r = await api("GET", "/api/campanas");
+    $("#t").innerHTML = r.length ? `<table class="tabla"><tr><th>Campaña</th><th>Período</th><th>Regla</th><th class="num">Participantes</th><th class="num">Chances</th><th></th></tr>
+      ${r.map(c => `<tr><td><b>${esc(c.nombre)}</b>${c.activa ? "" : " <small>(inactiva)</small>"}</td><td>${fecha(c.desde)} → ${fecha(c.hasta)}</td><td>${regla(c)}</td>
+        <td class="num">${c.participantes}</td><td class="num">${c.chances}</td>
+        <td style="white-space:nowrap"><button class="btn chico" data-ver="${c.id}">Chances</button> <button class="btn chico" data-ed="${c.id}">Editar</button> <button class="btn chico prim" data-sor="${c.id}">Sortear</button></td></tr>`).join("")}</table>`
+      : `<p class="sub">Todavía no hay campañas. Creá una para empezar a calcular chances.</p>`;
+    $$("[data-ver]").forEach(b => b.onclick = () => verChances(b.dataset.ver));
+    $$("[data-ed]").forEach(b => b.onclick = () => editarCampana(r.find(c => c.id == b.dataset.ed), cargar));
+    $$("[data-sor]").forEach(b => b.onclick = () => sortear(r.find(c => c.id == b.dataset.sor), cargar));
+  };
+  $("#nueva").onclick = () => editarCampana(null, cargar);
+  cargar();
+}
+
+const regla = c => (c.modo === "por_ticket" ? `1 chance por ticket de ${pesos(c.monto)} o más` : `1 chance cada ${pesos(c.monto)} de compra`)
+  + (c.max_chances_ticket ? ` (máx. ${c.max_chances_ticket} por ticket)` : "");
+
+function editarCampana(c, alGuardar) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  c = c || { nombre: "", desde: hoy, hasta: hoy, modo: "por_ticket", monto: 100000, max_chances_ticket: "", activa: true, notas: "" };
+  modal(`${cabModal(c.id ? "Editar campaña" : "Nueva campaña")}<p class="msg error oculto" id="err"></p>
+    <label class="campo"><span>Nombre</span><input id="nom" value="${esc(c.nombre)}"></label>
+    <div class="grilla"><label class="campo"><span>Tickets emitidos desde</span><input type="date" id="desde" value="${c.desde}"></label>
+      <label class="campo"><span>Hasta</span><input type="date" id="hasta" value="${c.hasta}"></label></div>
+    <div class="grilla"><label class="campo"><span>Regla</span><select id="modo"><option value="por_ticket">1 chance por ticket ≥ monto</option><option value="por_monto">1 chance cada X pesos</option></select></label>
+      <label class="campo"><span>Monto ($)</span><input type="number" id="monto" min="1" value="${c.monto}"></label>
+      <label class="campo"><span>Tope de chances por ticket (opcional)</span><input type="number" id="tope" min="1" value="${c.max_chances_ticket ?? ""}"></label></div>
+    <label class="campo"><span>Notas / bases</span><textarea id="notas" rows="3">${esc(c.notas)}</textarea></label>
+    <label><input type="checkbox" id="activa" ${c.activa ? "checked" : ""}> Activa</label>
+    <div class="fila-btns">${c.id ? `<button class="btn peligro" id="borrar">Borrar</button>` : ""}<button class="btn prim" id="guardar">Guardar</button></div>`);
+  $("#modo", dlg).value = c.modo;
+  $("#guardar", dlg).onclick = async () => {
+    const d = { nombre: $("#nom", dlg).value, desde: $("#desde", dlg).value, hasta: $("#hasta", dlg).value, modo: $("#modo", dlg).value,
+                monto: $("#monto", dlg).value, max_chances_ticket: $("#tope", dlg).value, notas: $("#notas", dlg).value, activa: $("#activa", dlg).checked };
+    try { await api(c.id ? "PUT" : "POST", c.id ? `/api/campanas/${c.id}` : "/api/campanas", d); dlg.close(); alGuardar(); }
+    catch (x) { const e = $("#err", dlg); e.textContent = x.message; e.classList.remove("oculto"); }
+  };
+  if (c.id) $("#borrar", dlg).onclick = async () => {
+    if (!confirm("¿Borrar la campaña?")) return;
+    try { await api("DELETE", `/api/campanas/${c.id}`); dlg.close(); alGuardar(); } catch (x) { toast(x.message, true); }
+  };
+}
+
+async function verChances(id) {
+  const r = await api("GET", `/api/campanas/${id}/chances`);
+  modal(`${cabModal(`Chances · ${esc(r.campana.nombre)}`)}<p class="sub">${regla(r.campana)} · ${fecha(r.campana.desde)} → ${fecha(r.campana.hasta)} · ${r.padron.length} participantes, ${r.padron.reduce((a, p) => a + p.chances, 0)} chances</p>
+    <div class="envoltura"><table class="tabla"><tr><th>Cliente</th><th>DNI</th><th class="num">Tickets</th><th class="num">Monto</th><th class="num">Chances</th></tr>
+    ${r.padron.map(p => `<tr><td>${esc(p.nombre)}</td><td>${esc(p.dni)}</td><td class="num">${p.tickets}</td><td class="num">${pesos(p.monto)}</td><td class="num"><b>${p.chances}</b></td></tr>`).join("")}</table></div>`);
+}
+
+function sortear(c, alTerminar) {
+  modal(`${cabModal(`Sortear · ${esc(c.nombre)}`)}
+    <p class="sub">${regla(c)}. Participan ${c.participantes} clientes con ${c.chances} chances. Cada chance es un número; se sortea al azar y gana su dueño (un cliente gana una sola vez por sorteo). Queda un acta guardada.</p>
+    <p class="msg error oculto" id="err"></p>
+    <div class="grilla"><label class="campo"><span>Cantidad de ganadores</span><input type="number" id="n" min="1" max="100" value="1"></label>
+      <label class="campo"><span>Descripción (premio, testigos…)</span><input id="desc"></label></div>
+    <label><input type="checkbox" id="excl" checked> Excluir a quienes ya ganaron un sorteo anterior de esta campaña</label>
+    <div class="fila-btns"><button class="btn prim" id="ir">Sortear</button></div>`);
+  $("#ir", dlg).onclick = async () => {
+    if (!confirm("¿Hacer el sorteo ahora? Queda registrado y no se puede deshacer.")) return;
+    try {
+      const s = await api("POST", `/api/campanas/${c.id}/sortear`, { ganadores: $("#n", dlg).value, descripcion: $("#desc", dlg).value, excluir_ganadores_previos: $("#excl", dlg).checked });
+      verActa(s.id); alTerminar?.();
+    } catch (x) { const e = $("#err", dlg); e.textContent = x.message; e.classList.remove("oculto"); }
+  };
+}
+
+async function verActa(id) {
+  const s = await api("GET", `/api/sorteos/${id}`);
+  modal(`${cabModal(`Acta de sorteo Nº ${s.id}`)}
+    <dl class="ficha"><dt>Campaña</dt><dd>${esc(s.campana)}</dd><dt>Fecha</dt><dd>${fechaHora(s.fecha)}</dd><dt>Realizado por</dt><dd>${esc(s.realizado_por)}</dd>
+      ${s.descripcion ? `<dt>Descripción</dt><dd>${esc(s.descripcion)}</dd>` : ""}<dt>Regla</dt><dd>${regla(s.reglas)} · tickets del ${fecha(s.reglas.desde)} al ${fecha(s.reglas.hasta)}</dd>
+      <dt>Participantes</dt><dd>${s.participantes} clientes · ${s.chances_total} chances</dd><dt>Huella del padrón</dt><dd style="font-family:monospace;font-size:12px;word-break:break-all">${s.padron_hash}</dd></dl>
+    <h2>Ganadores</h2>
+    <table class="tabla"><tr><th>Puesto</th><th>Ganador</th><th>DNI</th><th>Contacto</th><th class="num">Chances</th><th class="num">Nº sorteado</th></tr>
+      ${s.ganadores.map(g => `<tr><td>${g.puesto}º</td><td class="ganador">${esc(g.nombre)}</td><td>${esc(g.dni)}</td><td>${esc(g.telefono)}${g.email ? "<br>" + esc(g.email) : ""}</td>
+        <td class="num">${g.chances}</td><td class="num">${g.numero_sorteado} de ${g.chances_en_juego}</td></tr>`).join("")}</table>
+    <details style="margin-top:14px"><summary>Padrón completo (${s.padron.length})</summary><table class="tabla" style="margin-top:8px"><tr><th>Cliente</th><th>DNI</th><th class="num">Tickets</th><th class="num">Monto</th><th class="num">Chances</th></tr>
+      ${s.padron.map(p => `<tr><td>${esc(p.nombre)}</td><td>${esc(p.dni)}</td><td class="num">${p.tickets}</td><td class="num">${pesos(p.monto)}</td><td class="num">${p.chances}</td></tr>`).join("")}</table></details>
+    <div class="fila-btns no-imprimir"><button class="btn" onclick="window.print()">Imprimir</button></div>`);
+}
+
+async function pantallaSorteos(m) {
+  m.innerHTML = `<h1>Sorteos</h1><p class="sub">Actas de los sorteos realizados</p><div class="envoltura" id="t"></div>`;
+  const r = await api("GET", "/api/sorteos");
+  $("#t").innerHTML = r.length ? `<table class="tabla"><tr><th>Nº</th><th>Fecha</th><th>Campaña</th><th>Ganadores</th><th class="num">Participantes</th><th>Realizado por</th></tr>
+    ${r.map(s => `<tr class="clic" data-id="${s.id}"><td>${s.id}</td><td>${fechaHora(s.fecha)}</td><td>${esc(s.campana)}</td><td>${s.ganadores.map(g => esc(g.nombre)).join(", ")}</td>
+      <td class="num">${s.participantes}</td><td>${esc(s.realizado_por)}</td></tr>`).join("")}</table>` : `<p class="sub">Todavía no se hizo ningún sorteo.</p>`;
+  $$("tr[data-id]").forEach(tr => tr.onclick = () => verActa(tr.dataset.id));
+}
+
+function pantallaExportar(m) {
+  m.innerHTML = `<h1>Exportar</h1><p class="sub">Archivos CSV (separados con ;, se abren con Excel) para análisis de datos</p>
+    <div class="cifras">
+      <a class="cifra" style="text-decoration:none;color:inherit" href="/api/exportar/clientes"><b>Clientes</b><span>Datos, edad, cantidad de tickets y monto total</span></a>
+      <a class="cifra" style="text-decoration:none;color:inherit" href="/api/exportar/tickets"><b>Tickets</b><span>Uno por compra: emisión, día de la semana, hora, total, cajero</span></a>
+      <a class="cifra" style="text-decoration:none;color:inherit" href="/api/exportar/articulos"><b>Artículos</b><span>Uno por renglón: producto, cantidad, precio, cliente y hora</span></a>
+    </div>`;
+}
+
+// ---------------------------------------------------------------- arranque ---
+
+(async () => {
+  try {
+    const u = await api("GET", "/api/yo"); modo = u.modo;
+    entrar(u);
+  } catch { pantallaLogin(); }
+})();
+</script>
+</body>
+</html>

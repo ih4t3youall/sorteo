@@ -1,0 +1,25 @@
+{
+  "modo": "prod",
+  "puerto": 8781,
+  "registros": {
+    "dev": "http://localhost:8780",
+    "prod": "http://192.168.0.150:8780"
+  },
+  "roles_permitidos": [
+    "cajero"
+  ],
+  "digitos_ticket": 8,
+  "hora_corte": "23:59",
+  "dias_retener_archivos": 7,
+  "apliton": {
+    "activo": false,
+    "url": "",
+    "token": ""
+  },
+  "usuario_local": {
+    "activo": true,
+    "usuario": "caja.temporal",
+    "nombre": "Caja temporal",
+    "pin": "3221"
+  }
+}
