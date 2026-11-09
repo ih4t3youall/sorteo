@@ -56,6 +56,9 @@ Corre sin ventana (el log queda en
 ./run.sh --importar /ruta/archivo.zip
 ```
 
+También se baja desde la página con el botón **Exportar datos** (arriba a la derecha, para admins y el usuario temporal):
+es el mismo `.zip` que después se carga con `--importar`.
+
 Exportar se puede hacer con el programa andando. Trae todas las tablas menos las sesiones, incluidos los renglones que
 esperan cruce. No trae `config.json` (cada instalación tiene el suyo). El `.zip` tiene datos personales de los clientes.
 
@@ -74,7 +77,8 @@ Todas las sesiones del sorteo (también las de los admins) vencen a las 23:59.
 ## Usuario temporal (sin el Sistema de Registros)
 
 Mientras el servidor no llegue al Sistema de Registros, en `config.json` hay un usuario (`caja.temporal`) que entra sin
-consultar allá. Tiene los mismos permisos que un cajero: solo carga y edición. Lo comparten todos, así que los tickets
+consultar allá. Tiene los permisos de un cajero (carga y edición) y además puede bajar la exportación completa, que
+incluye los datos personales de todos los clientes (cada descarga queda en el log). Lo comparten todos, así que los tickets
 quedan a nombre de «Caja temporal». Cinco PIN equivocados lo bloquean 5 minutos.
 
 Se desactiva de dos formas, y las dos le cierran la sesión al momento: cualquier admin desde el **Panel**, o poniendo
@@ -137,4 +141,5 @@ Todo JSON. Login con cookie o `Authorization: Bearer <token>`. Lista completa: `
 | POST | `/api/campanas/{id}/sortear` | admin | `{ganadores, descripcion?, excluir_ganadores_previos?}` → acta |
 | GET | `/api/sorteos` · `/api/sorteos/{id}` | admin | Actas |
 | GET | `/api/exportar/{clientes\|tickets\|articulos}` | admin | CSV para análisis |
+| GET | `/api/exportar-todo` | admin o usuario temporal | Todos los datos en un `.zip` para `--importar` |
 | GET | `/api/resumen` | admin | Números del panel |

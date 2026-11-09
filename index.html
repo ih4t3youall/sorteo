@@ -220,6 +220,7 @@ function marco(actual) {
     <div class="marca"><div class="logo">LB</div><div>Sorteo ${modo === "dev" ? `<span class="dev">DEV</span>` : ""}</div></div>
     <div class="quien">
       <div class="txt"><b>${esc(yo.nombre)}</b><small>${esc(yo.es_admin ? "Administrador" : "Cajero")}${yo.sector ? " · " + esc(yo.sector) : ""} · sesión hasta las 23:59</small></div>
+      ${yo.puede_exportar_todo ? `<a class="btn chico" style="text-decoration:none;color:inherit" href="/api/exportar-todo" download tabindex="-1">Exportar datos</a>` : ""}
       <button class="btn chico" id="salir" tabindex="-1">Salir</button>
     </div>
   </div>${tabs}</header>

@@ -255,8 +255,8 @@ FORMATO_EXPORTACION = 1
 TABLAS_SIN_EXPORTAR = {"sesiones"}
 
 
-def tablas_db():
-    return [r[0] for r in _con.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+def tablas_db(con=None):
+    return [r[0] for r in (con or _con).execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
             if r[0] not in TABLAS_SIN_EXPORTAR]
 
 
@@ -264,19 +264,32 @@ def columnas_db(tabla):
     return [r[1] for r in _con.execute(f'PRAGMA table_info("{tabla}")')]
 
 
+def datos_exportacion():
+    """Foto de toda la base. Con conexión propia: _con la comparten los hilos del servidor y un BEGIN ahí mezclaría sus escrituras."""
+    con = sqlite3.connect(DB, timeout=10)
+    try:
+        con.execute("BEGIN")  # una sola foto de la base, aunque el servidor esté guardando
+        tablas = {}
+        for t in tablas_db(con):
+            cur = con.execute(f'SELECT * FROM "{t}"')
+            tablas[t] = {"columnas": [c[0] for c in cur.description], "filas": [list(r) for r in cur]}
+    finally:
+        con.close()
+    return {"sistema": "sorteo", "formato": FORMATO_EXPORTACION, "exportado": ahora(), "tablas": tablas}
+
+
+def escribir_zip_exportacion(destino, contenido):
+    with zipfile.ZipFile(destino, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("sorteo.json", json.dumps(contenido, ensure_ascii=False))
+
+
 def exportar(destino=None):
     destino = destino or os.path.join(RESPALDOS, f"sorteo_exportado_{datetime.now():%Y-%m-%d_%H-%M-%S}.zip")
-    _con.execute("BEGIN")  # una sola foto de la base, aunque el servidor esté guardando
-    try:
-        tablas = {t: {"columnas": columnas_db(t), "filas": [list(r) for r in _con.execute(f'SELECT * FROM "{t}"')]} for t in tablas_db()}
-    finally:
-        _con.rollback()
-    contenido = {"sistema": "sorteo", "formato": FORMATO_EXPORTACION, "exportado": ahora(), "tablas": tablas}
+    contenido = datos_exportacion()
     temporal = destino + ".tmp"
-    with zipfile.ZipFile(temporal, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("sorteo.json", json.dumps(contenido, ensure_ascii=False))
+    escribir_zip_exportacion(temporal, contenido)
     os.replace(temporal, destino)
-    for t, d in tablas.items():
+    for t, d in contenido["tablas"].items():
         print(f"  {t}: {len(d['filas'])}")
     print(f"Exportado en: {destino}")
 
@@ -419,7 +432,7 @@ def puede_entrar(u):
 
 
 # --------------------------------------------------------- usuario temporal ---
-# Para cuando el servidor no llega al Sistema de Registros: entra sin pasar por allá y solo puede cargar y editar.
+# Para cuando el servidor no llega al Sistema de Registros: entra sin pasar por allá. Puede cargar, editar y bajar la exportación completa.
 
 _fallos_local = [0, 0.0]  # fallos, bloqueado_hasta
 
@@ -485,7 +498,8 @@ def segundos_hasta(vence):
 
 def sesion_dict(s):
     return {"id": s["usuario_id"], "usuario": s["usuario"], "nombre": s["nombre"], "sector": s["sector"],
-            "es_admin": bool(s["es_admin"]), "roles": json.loads(s["roles"]), "sesion_segundos": segundos_hasta(s["vence"])}
+            "es_admin": bool(s["es_admin"]), "roles": json.loads(s["roles"]), "sesion_segundos": segundos_hasta(s["vence"]),
+            "puede_exportar_todo": bool(s["es_admin"]) or s["usuario_id"] == ID_USUARIO_LOCAL}
 
 
 # ----------------------------------------------------------------- tickets ---
@@ -1364,6 +1378,17 @@ def api_exportar(req, yo, cuerpo, que):
                                r["cajero_nombre"], r["renglon"], r["producto"], r["descripcion"], r["rubro"], r["marca"], r["cantidad"], r["bonif"],
                                r["precio_unitario_final"], r["subtotal"], r["total"]] for r in rs])
     raise ApiError(404, "Exportaciones: clientes, tickets, articulos")
+
+
+@ruta("GET", r"/api/exportar-todo", "usuario", "Todos los datos en un .zip para run.sh --importar (admin o usuario temporal)")
+def api_exportar_todo(req, yo, cuerpo):
+    if not yo["puede_exportar_todo"]:
+        raise ApiError(403, "Solo para administradores o el usuario temporal")
+    zip_memoria = io.BytesIO()
+    escribir_zip_exportacion(zip_memoria, datos_exportacion())
+    print(f"[{ahora()}] Exportación completa descargada por {yo['usuario']}")
+    return Respuesta(zip_memoria.getvalue(), "application/zip",
+                     headers={"Content-Disposition": f'attachment; filename="sorteo_exportado_{datetime.now():%Y-%m-%d_%H-%M-%S}.zip"'})
 
 
 @ruta("GET", r"/api/resumen", "admin", "Números generales para el panel")
