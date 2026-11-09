@@ -12,6 +12,13 @@ MODO=prod ./run.sh       # producción: valida contra el Sistema de Registros en
 python3 servidor.py --dev        # en la consola, Sistema de Registros en localhost:8780
 ```
 
+En Windows, desde PowerShell o CMD (mismas opciones que `run.sh`, no hace falta Git Bash):
+
+```powershell
+.\run.cmd                        # instala lo necesario y lo deja andando
+$env:MODO='prod'; .\run.cmd      # producción, solo en PowerShell
+```
+
 `config.json`:
 
 | Clave | Qué es |
@@ -33,11 +40,12 @@ python3 servidor.py --dev        # en la consola, Sistema de Registros en localh
 |---|---|
 | Linux con systemd y sudo | Servicio `sorteo-la-bestia` (si se cae, se reinicia) |
 | Linux sin eso | Línea `@reboot` en el cron del usuario |
-| Windows, Git Bash como administrador | Tarea programada «Sorteo La Bestia»: arranca sin que nadie inicie sesión. También abre el puerto en el firewall |
-| Windows, Git Bash sin administrador | Carpeta Inicio: arranca cuando alguien inicia sesión. El firewall hay que abrirlo a mano |
+| Windows, `run.cmd` (o Git Bash) como administrador | Tarea programada «Sorteo La Bestia»: arranca sin que nadie inicie sesión. También abre el puerto en el firewall |
+| Windows, `run.cmd` (o Git Bash) sin administrador | Carpeta Inicio: arranca cuando alguien inicia sesión. El firewall hay que abrirlo a mano |
 
-En Windows hace falta [Git for Windows](https://git-scm.com/download/win) para correr `run.sh`, y corre sin ventana (el log queda en
-`datos/servidor.log`). `./run.sh --desinstalar` saca el arranque automático. En cada servidor conviene poner el `modo` en
+En Windows usá `run.cmd` (clic derecho → *Ejecutar como administrador* para el arranque sin sesión); si falta Python lo instala con `winget`.
+Corre sin ventana (el log queda en
+`datos/servidor.log`). `./run.sh --desinstalar` o `.\run.cmd --desinstalar` saca el arranque automático. En cada servidor conviene poner el `modo` en
 `config.json`: con `MODO=prod ./run.sh` solo, un `--reiniciar` posterior sin `MODO` vuelve al modo del archivo.
 
 ## Exportar e importar todos los datos
